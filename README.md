@@ -8,7 +8,7 @@ A hunter's wrist display for round Wear OS watches (built for the OnePlus Watch 
   <img src="docs/thermal.png" width="250" alt="Predator watch face, thermal view">
 </p>
 
-The pictures are composited locally from the rendered layers (`tools/mock.ps1`).
+The pictures are screenshots from the watch.
 
 ## The display
 
