@@ -1,5 +1,5 @@
 # Generates res/raw/watchface.xml for the Predator face.
-# Layers, back to front: housing / lit numerals / start-up scramble / readouts / gauges / ranging mark / glass /
+# Layers, back to front: housing / lit numerals / running display / readouts / gauges / ranging mark / glass /
 # thermal view (revealed for 4 s by a tap) / always-on.
 $root = Split-Path $PSScriptRoot -Parent
 function Esc($s) { [System.Security.SecurityElement]::Escape($s) }
@@ -48,6 +48,11 @@ function Bar($name, $x, $widthExpr) {
 
 "@
 }
+# The display alternates for as long as the screen is on: HOLD seconds showing the time, RUN seconds running like a counter.
+# One animation does it all (separate per-cell animations drift out of step on the watch): transparent frames while the
+# time shows, then opaque frames of the four cells with symbols lit, baked by PredatorRender.SaveRun.
+$FPS = 8; $HOLD = 2; $RUN = 5
+$runFrames = (1..($FPS * $HOLD) | ForEach-Object { "pr_off" }) + (0..($FPS * $RUN - 1) | ForEach-Object { "pr_r{0:00}" -f $_ })
 function Frames($list, $ind) { ($list | ForEach-Object { "$ind<Image resource=`"$_`"/>`n" }) -join "" }
 $U = 'clamp([ACCELEROMETER_ANGLE_X] / 30, -1, 1)'
 $V = 'clamp([ACCELEROMETER_ANGLE_Y] / 40, -1, 1)'
@@ -65,18 +70,19 @@ $xml = @"
       <Image resource="pr_bg"/>
     </PartImage>
 
-    <!-- the time in the hunter's numerals: bars count 1-4, the spine is 5, the diamond is 0 -->
+    <!-- the time in the hunter's numerals (segment patterns, see PredatorRender.Pattern), shown for $HOLD s out of every $($HOLD + $RUN) -->
     <Group name="glyphs" x="0" y="0" width="466" height="466" alpha="255">
       <Variant mode="AMBIENT" target="alpha" value="0"/>
 $(Glyphs "pr_g" $PAD "      ")    </Group>
 
-    <!-- start-up: the cells flick through random numerals for half a second each time the face becomes visible -->
-    <PartAnimatedImage name="scramble" x="38" y="122" width="390" height="212">
+    <!-- the running display: covers the cells for $RUN s out of every $($HOLD + $RUN), restarting with the time each time the face wakes -->
+    <PartAnimatedImage name="run" x="52" y="132" width="364" height="156">
       <Variant mode="AMBIENT" target="alpha" value="0"/>
-      <AnimationController play="ON_VISIBLE" loopCount="1" beforePlaying="FIRST_FRAME" afterPlaying="HIDE"/>
-      <SequenceImages loopCount="1" frameRate="16" thumbnail="pr_off">
-$(Frames (0..7 | ForEach-Object { "pr_s$_" }) "        ")      </SequenceImages>
+      <AnimationController play="ON_VISIBLE" repeat="TRUE" beforePlaying="FIRST_FRAME" afterPlaying="FIRST_FRAME"/>
+      <SequenceImages loopCount="1" frameRate="$FPS" thumbnail="pr_off">
+$(Frames $runFrames "        ")      </SequenceImages>
     </PartAnimatedImage>
+
 
     <Group name="readouts" x="0" y="0" width="466" height="466" alpha="255">
       <Variant mode="AMBIENT" target="alpha" value="0"/>

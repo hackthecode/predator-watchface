@@ -10,7 +10,7 @@
       <Image resource="pr_bg"/>
     </PartImage>
 
-    <!-- the time in the hunter's numerals: bars count 1-4, the spine is 5, the diamond is 0 -->
+    <!-- the time in the hunter's numerals (segment patterns, see PredatorRender.Pattern), shown for 2 s out of every 7 -->
     <Group name="glyphs" x="0" y="0" width="466" height="466" alpha="255">
       <Variant mode="AMBIENT" target="alpha" value="0"/>
       <PartImage x="52" y="132" width="98" height="156" alpha="0"><Transform target="alpha" value="(floor(([IS_24_HOUR_MODE] ? [HOUR_0_23] : [HOUR_1_12]) / 10) == 0) ? 255 : 0"/><Image resource="pr_g0"/></PartImage>
@@ -55,21 +55,70 @@
       <PartImage x="318" y="132" width="98" height="156" alpha="0"><Transform target="alpha" value="(([MINUTE] % 10) == 9) ? 255 : 0"/><Image resource="pr_g9"/></PartImage>
     </Group>
 
-    <!-- start-up: the cells flick through random numerals for half a second each time the face becomes visible -->
-    <PartAnimatedImage name="scramble" x="38" y="122" width="390" height="212">
+    <!-- the running display: covers the cells for 5 s out of every 7, restarting with the time each time the face wakes -->
+    <PartAnimatedImage name="run" x="52" y="132" width="364" height="156">
       <Variant mode="AMBIENT" target="alpha" value="0"/>
-      <AnimationController play="ON_VISIBLE" loopCount="1" beforePlaying="FIRST_FRAME" afterPlaying="HIDE"/>
-      <SequenceImages loopCount="1" frameRate="16" thumbnail="pr_off">
-        <Image resource="pr_s0"/>
-        <Image resource="pr_s1"/>
-        <Image resource="pr_s2"/>
-        <Image resource="pr_s3"/>
-        <Image resource="pr_s4"/>
-        <Image resource="pr_s5"/>
-        <Image resource="pr_s6"/>
-        <Image resource="pr_s7"/>
+      <AnimationController play="ON_VISIBLE" repeat="TRUE" beforePlaying="FIRST_FRAME" afterPlaying="FIRST_FRAME"/>
+      <SequenceImages loopCount="1" frameRate="8" thumbnail="pr_off">
+        <Image resource="pr_off"/>
+        <Image resource="pr_off"/>
+        <Image resource="pr_off"/>
+        <Image resource="pr_off"/>
+        <Image resource="pr_off"/>
+        <Image resource="pr_off"/>
+        <Image resource="pr_off"/>
+        <Image resource="pr_off"/>
+        <Image resource="pr_off"/>
+        <Image resource="pr_off"/>
+        <Image resource="pr_off"/>
+        <Image resource="pr_off"/>
+        <Image resource="pr_off"/>
+        <Image resource="pr_off"/>
+        <Image resource="pr_off"/>
+        <Image resource="pr_off"/>
+        <Image resource="pr_r00"/>
+        <Image resource="pr_r01"/>
+        <Image resource="pr_r02"/>
+        <Image resource="pr_r03"/>
+        <Image resource="pr_r04"/>
+        <Image resource="pr_r05"/>
+        <Image resource="pr_r06"/>
+        <Image resource="pr_r07"/>
+        <Image resource="pr_r08"/>
+        <Image resource="pr_r09"/>
+        <Image resource="pr_r10"/>
+        <Image resource="pr_r11"/>
+        <Image resource="pr_r12"/>
+        <Image resource="pr_r13"/>
+        <Image resource="pr_r14"/>
+        <Image resource="pr_r15"/>
+        <Image resource="pr_r16"/>
+        <Image resource="pr_r17"/>
+        <Image resource="pr_r18"/>
+        <Image resource="pr_r19"/>
+        <Image resource="pr_r20"/>
+        <Image resource="pr_r21"/>
+        <Image resource="pr_r22"/>
+        <Image resource="pr_r23"/>
+        <Image resource="pr_r24"/>
+        <Image resource="pr_r25"/>
+        <Image resource="pr_r26"/>
+        <Image resource="pr_r27"/>
+        <Image resource="pr_r28"/>
+        <Image resource="pr_r29"/>
+        <Image resource="pr_r30"/>
+        <Image resource="pr_r31"/>
+        <Image resource="pr_r32"/>
+        <Image resource="pr_r33"/>
+        <Image resource="pr_r34"/>
+        <Image resource="pr_r35"/>
+        <Image resource="pr_r36"/>
+        <Image resource="pr_r37"/>
+        <Image resource="pr_r38"/>
+        <Image resource="pr_r39"/>
       </SequenceImages>
     </PartAnimatedImage>
+
 
     <Group name="readouts" x="0" y="0" width="466" height="466" alpha="255">
       <Variant mode="AMBIENT" target="alpha" value="0"/>

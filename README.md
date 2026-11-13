@@ -9,21 +9,14 @@ An alien hunter's wrist computer for round Wear OS watches (built for the OnePlu
 
 Both pictures are screenshots from the watch.
 
-## Reading the numerals
+## The numerals
 
-Each of the four cells is one digit of HH:MM, read like a tally:
-
-| Mark | Value |
-| --- | --- |
-| slanted bars, stacked from the bottom | one each, up to four |
-| hooked spine on the left | five |
-| lone diamond | zero |
-
-So spine + two bars is 7, four bars is 4, the spine alone is 5. The time is repeated in ordinary digits underneath.
+Each of the four cells is a segment display: eleven LED bars on a 2 × 3 lattice (verticals, horizontals and diagonals). A symbol is a handful of lit bars. The sixteen patterns are invented for this face — ten stand for the digits 0–9, six more only appear while the display is running — and are defined in `PredatorRender.Pattern`. The time is repeated in ordinary digits underneath.
 
 ## Features
 
-- Start-up: the cells flick through random numerals for half a second each time the watch wakes
+- The display alternates for as long as the screen is on: two seconds showing the time, five seconds running like a counter, the right-hand cell changing fastest
+
 - Tap the display for four seconds of thermal view: white-hot numerals, the pulse as a hot spot, battery and steps as text
 - A three-dot ranging mark wanders over the display with the tilt of the wrist, and the reflection on the glass slides with it
 - Date, heart rate, and two gauges: PWR (battery) and TRK (steps toward the daily goal)

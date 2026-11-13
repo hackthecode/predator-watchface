@@ -102,23 +102,27 @@ public static class PredatorRender
     }
 
     // ------------------------------------------------------------ the numerals
-    // An invented tally system, read bottom-up: slanted bars count one to four, the hooked spine on the left is worth five,
-    // a lone diamond is zero. So 7 = spine + two bars, 4 = four bars, 5 = spine alone.
-    static void Bar(Graphics g, Pen pen, float ox, float oy, int row) { float y = oy + 106 - row * 28; g.DrawLine(pen, ox + 26, y + 11, ox + 62, y - 9); }
-    static void Spine(Graphics g, Pen pen, float ox, float oy) { g.DrawLines(pen, new[] { new PointF(ox + 24, oy + 6), new PointF(ox + 12, oy + 18), new PointF(ox + 12, oy + 120) }); }
-    static void Diamond(Graphics g, Pen pen, float ox, float oy) { float cx = ox + 38, cy = oy + 64, r = 11; g.DrawPolygon(pen, new[] { new PointF(cx, cy - r * 1.4f), new PointF(cx + r, cy), new PointF(cx, cy + r * 1.4f), new PointF(cx - r, cy) }); }
+    // Each cell is a segment display: eleven LED bars on a 2 x 3 lattice of nodes (two verticals per side, three horizontals,
+    // four diagonals). A symbol is a handful of lit bars. The sixteen patterns below are invented for this face:
+    // the first ten stand for the digits 0-9, the other six only appear while the display is running.
+    static readonly PointF[] Node = { new PointF(14, 12), new PointF(56, 12), new PointF(14, 64), new PointF(56, 64), new PointF(14, 116), new PointF(56, 116) };
+    //                              0:LU    1:LL    2:RU    3:RL    4:top   5:mid   6:bot   7:/up   8:/low  9:\up   10:\low
+    static readonly int[][] Seg = { new[]{0,2}, new[]{2,4}, new[]{1,3}, new[]{3,5}, new[]{0,1}, new[]{2,3}, new[]{4,5}, new[]{2,1}, new[]{4,3}, new[]{0,3}, new[]{2,5} };
+    public static readonly int[][] Pattern = {
+        new[]{7, 10}, new[]{0, 8}, new[]{9, 1, 6}, new[]{7, 3}, new[]{4, 9, 8}, new[]{2, 5, 10}, new[]{0, 7, 10, 3}, new[]{1, 9, 2}, new[]{4, 8, 3}, new[]{0, 5, 8, 6},
+        new[]{7, 8}, new[]{9, 10, 6}, new[]{4, 1, 3}, new[]{2, 10}, new[]{0, 9, 8}, new[]{5, 7, 1} };
+    public const int Symbols = 16;
     static Pen Stroke(Color c, float w) { var p = new Pen(c, w); p.StartCap = LineCap.Triangle; p.EndCap = LineCap.Triangle; p.LineJoin = LineJoin.Miter; return p; }
-    public static void Glyph(Graphics g, int v, float ox, float oy, Color c, float w)
+    // one LED bar between two nodes, pulled back from both so neighbouring bars never touch
+    static void Segment(Graphics g, Pen pen, float ox, float oy, int s)
     {
-        using (var pen = Stroke(c, w))
-        {
-            if (v == 0) { Diamond(g, pen, ox, oy); return; }
-            if (v >= 5) Spine(g, pen, ox, oy);
-            for (int r = 0; r < v % 5; r++) Bar(g, pen, ox, oy, r);
-        }
+        var a = Node[Seg[s][0]]; var b = Node[Seg[s][1]]; float dx = b.X - a.X, dy = b.Y - a.Y, len = (float)Math.Sqrt(dx * dx + dy * dy), gap = 6.5f / len;
+        g.DrawLine(pen, ox + a.X + dx * gap, oy + a.Y + dy * gap, ox + b.X - dx * gap, oy + b.Y - dy * gap);
     }
+    public static void Glyph(Graphics g, int v, float ox, float oy, Color c, float w)
+    { using (var pen = Stroke(c, w)) foreach (int s in Pattern[v]) Segment(g, pen, ox, oy, s); }
     static void GlyphAll(Graphics g, float ox, float oy, Color c, float w)
-    { using (var pen = Stroke(c, w)) { Spine(g, pen, ox, oy); for (int r = 0; r < 4; r++) Bar(g, pen, ox, oy, r); } }
+    { using (var pen = Stroke(c, w)) for (int s = 0; s < Seg.Length; s++) Segment(g, pen, ox, oy, s); }
 
     public static Bitmap LitGlyph(int v, float[][] pal)
     {
@@ -211,8 +215,8 @@ public static class PredatorRender
                 double a = (i + 0.5) * Math.PI * 2 / 28; if (Math.Abs(Math.Sin(a)) < 0.42) continue;       // leave the flanks of the display clear
                 var st = g.Save();
                 g.TranslateTransform(233 + (float)Math.Cos(a) * 186, 233 + (float)Math.Sin(a) * 186); g.RotateTransform((float)(a * 180 / Math.PI) + 90); g.ScaleTransform(0.15f, 0.15f);
-                int v = rnd.Next(1, 10);
-                Glyph(g, v, -36, -62, Color.FromArgb(220, 0, 0, 0), 11f); Glyph(g, v, -32, -58, Color.FromArgb(70, 170, 175, 190), 5f);
+                int v = rnd.Next(0, Symbols);
+                Glyph(g, v, -35, -64, Color.FromArgb(220, 0, 0, 0), 12f); Glyph(g, v, -31, -60, Color.FromArgb(70, 170, 175, 190), 6f);
                 g.Restore(st);
             }
             // wear: hairline scratches and three parallel gouges
@@ -237,7 +241,7 @@ public static class PredatorRender
                 using (var pen = new Pen(Color.FromArgb(46, 0, 0, 0), 1f)) for (int y = Screen.Top; y < Screen.Bottom; y += 3) g.DrawLine(pen, Screen.Left, y + 0.5f, Screen.Right, y + 0.5f);
                 using (var lg = new LinearGradientBrush(new RectangleF(Screen.Left, Screen.Top - 1, Screen.Width, 30), Color.FromArgb(190, 0, 0, 0), Color.FromArgb(0, 0, 0, 0), 90f)) g.FillRectangle(lg, Screen.Left, Screen.Top, Screen.Width, 29);
                 // unlit segments of every cell
-                foreach (int cx in CellX) { GlyphAll(g, cx, CellY, Color.FromArgb(120, 70, 8, 8), 6.5f); using (var pen = Stroke(Color.FromArgb(70, 70, 8, 8), 4f)) Diamond(g, pen, cx, CellY); }
+                foreach (int cx in CellX) GlyphAll(g, cx, CellY, Color.FromArgb(105, 66, 8, 8), 6.5f);
                 // separator: two lit diamonds
                 foreach (float cy in new[] { 186f, 234f }) using (var br = new SolidBrush(Color.FromArgb(255, 255, 70, 50))) g.FillPolygon(br, new[] { new PointF(233, cy - 7), new PointF(238, cy), new PointF(233, cy + 7), new PointF(228, cy) });
                 g.Restore(st);
@@ -291,14 +295,23 @@ public static class PredatorRender
         return Glow(BarW, BarH, m, L, 0);
     }
 
-    // start-up scramble: the display region with random numerals lit, so the cells look like they are seeking
-    public static Bitmap Scramble(Bitmap bg, Bitmap[] glyphs, int n)
+    // Running display: opaque frames of the four cells (cut from the background, so they cover the time numerals completely)
+    // with symbols lit. The right-hand cell changes every frame, the left-hand one slowest, the way a counter runs.
+    public static readonly Rectangle RunRect = new Rectangle(CellX[0] - Pad, CellY - Pad, CellX[3] + CellW + Pad - (CellX[0] - Pad), CellH + 2 * Pad);
+    public const int RunFrames = 40;
+    static readonly int[] Every = { 20, 10, 4, 1 };
+    static void SaveRun(Bitmap bg, Bitmap[] lit, Func<string, string> P)
     {
-        var bmp = bg.Clone(Screen, PixelFormat.Format32bppArgb);
-        var rnd = new Random(40 + n * 13);
-        using (var g = Graphics.FromImage(bmp))
-            for (int i = 0; i < 4; i++) { var gl = glyphs[rnd.Next(1, 10)]; g.DrawImage(gl, CellX[i] - Pad - Screen.Left, CellY - Pad - Screen.Top, gl.Width, gl.Height); }
-        return bmp;
+        var rnd = new Random(23); var cur = new int[4];
+        for (int f = 0; f < RunFrames; f++)
+        {
+            for (int i = 0; i < 4; i++) if (f % Every[i] == 0) { int n; do { n = rnd.Next(0, Symbols); } while (n == cur[i] && f > 0); cur[i] = n; }
+            using (var bmp = bg.Clone(RunRect, PixelFormat.Format32bppArgb))
+            {
+                using (var g = Graphics.FromImage(bmp)) for (int i = 0; i < 4; i++) g.DrawImage(lit[cur[i]], CellX[i] - Pad - RunRect.Left, CellY - Pad - RunRect.Top, lit[cur[i]].Width, lit[cur[i]].Height);
+                bmp.Save(P("pr_r" + f.ToString("00")), ImageFormat.Png);
+            }
+        }
     }
 
     // thermal view: the same housing seen as heat. Cold metal runs blue to violet, the display and the pulse slot run hot.
@@ -338,14 +351,11 @@ public static class PredatorRender
     {
         Func<string, string> P = n => System.IO.Path.Combine(outDir, n + ".png");
         var bg = Background(); bg.Save(P("pr_bg"), ImageFormat.Png);
-        var lit = new Bitmap[10];
-        for (int v = 0; v < 10; v++)
-        {
-            lit[v] = LitGlyph(v, Red); lit[v].Save(P("pr_g" + v), ImageFormat.Png);
-            LitGlyph(v, Hot).Save(P("pr_t" + v), ImageFormat.Png);
-            AmbientGlyph(v).Save(P("pr_a" + v), ImageFormat.Png);
-        }
-        for (int n = 0; n < 8; n++) Scramble(bg, lit, n).Save(P("pr_s" + n), ImageFormat.Png);
+        // pr_g0-9 = digits; the six extra symbols only appear baked into the running frames pr_r00-39
+        var lit = new Bitmap[Symbols];
+        for (int v = 0; v < Symbols; v++) { lit[v] = LitGlyph(v, Red); if (v < 10) lit[v].Save(P("pr_g" + v), ImageFormat.Png); }
+        SaveRun(bg, lit, P);
+        for (int v = 0; v < 10; v++) { LitGlyph(v, Hot).Save(P("pr_t" + v), ImageFormat.Png); AmbientGlyph(v).Save(P("pr_a" + v), ImageFormat.Png); }
         Thermal(bg).Save(P("pr_thermal"), ImageFormat.Png);
         Highlight().Save(P("pr_hl"), ImageFormat.Png);
         TriDot().Save(P("pr_tri"), ImageFormat.Png);
