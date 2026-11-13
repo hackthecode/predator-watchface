@@ -51,8 +51,6 @@ public static class PredatorRender
     // light -> transparent PNG. layers: blur radius, r, g, b, gain. Red keeps a saturated core (no white-hot centre) and a tight halo.
     static readonly float[][] Red = {
         new float[]{0, 1.00f, 0.16f, 0.14f, 1.00f}, new float[]{2, 1.00f, 0.05f, 0.05f, 0.70f}, new float[]{6, 1.00f, 0.02f, 0.02f, 0.38f}, new float[]{14, 1.00f, 0.01f, 0.01f, 0.16f} };
-    static readonly float[][] Hot = {
-        new float[]{0, 1.00f, 1.00f, 1.00f, 1.00f}, new float[]{2, 1.00f, 0.95f, 0.45f, 0.95f}, new float[]{5, 1.00f, 0.62f, 0.10f, 0.75f}, new float[]{11, 1.00f, 0.25f, 0.05f, 0.45f} };
     static Bitmap Glow(int w, int h, float[] wire, float[][] L, float edgeFade)
     {
         var R = new float[w * h]; var G = new float[w * h]; var B = new float[w * h];
@@ -72,15 +70,6 @@ public static class PredatorRender
         var d = bmp.LockBits(new Rectangle(0, 0, w, h), ImageLockMode.WriteOnly, PixelFormat.Format32bppArgb);
         Marshal.Copy(buf, 0, d.Scan0, buf.Length); bmp.UnlockBits(d); return bmp;
     }
-    static float Hash(int x, int y) { unchecked { int n = x * 374761393 + y * 668265263; n = (n ^ (n >> 13)) * 1274126177; return ((n ^ (n >> 16)) & 0xffff) / 65535f; } }
-    static float Noise(float x, float y)
-    {
-        int xi = (int)Math.Floor(x), yi = (int)Math.Floor(y); float xf = x - xi, yf = y - yi;
-        float u = xf * xf * (3 - 2 * xf), v = yf * yf * (3 - 2 * yf);
-        float a = Hash(xi, yi), b = Hash(xi + 1, yi), c = Hash(xi, yi + 1), d = Hash(xi + 1, yi + 1);
-        return a + (b - a) * u + (c - a) * v + (a - b - c + d) * u * v;
-    }
-    static float Fbm(float x, float y) { float s = 0, amp = 0.5f; for (int o = 0; o < 5; o++) { s += Noise(x, y) * amp; x *= 2.03f; y *= 2.03f; amp *= 0.5f; } return s; }
     static void Pixels(Bitmap bmp, Func<int, int, Color, Color> f)
     {
         int w = bmp.Width, h = bmp.Height;
@@ -157,16 +146,22 @@ public static class PredatorRender
     }
 
     // ------------------------------------------------------------ running display
-    // Opaque frames of the four cells (cut from the background, so they cover the time digits completely), every cell showing a new symbol.
+    // Opaque frames of the four cells (cut from the background, so they cover the time digits completely). There is one frame per
+    // tick of the animation clock (RunFps). Each cell keeps its symbol for a random 3 to 6 ticks, i.e. it changes 2 to 4 times a
+    // second, independently of the others.
     public static readonly Rectangle RunRect = new Rectangle(CellX[0] - Pad, CellY - Pad, CellX[3] + CellW + Pad - (CellX[0] - Pad), CellH + 2 * Pad);
-    public const int RunFrames = 10;
+    public const int RunFps = 12, RunFrames = 60;
     static void SaveRun(Bitmap bg, Bitmap[] sym, Func<string, string> P)
     {
-        var rnd = new Random(23); var cur = new[] { -1, -1, -1, -1 };
+        var rnd = new Random(23); var cur = new[] { -1, -1, -1, -1 }; var left = new int[4];
         for (int f = 0; f < RunFrames; f++)
         {
-            var prev = (int[])cur.Clone();
-            for (int i = 0; i < 4; i++) { int n; do { n = rnd.Next(0, Symbols); } while (n == prev[i] || Array.IndexOf(cur, n, 0, i) >= 0); cur[i] = n; }
+            for (int i = 0; i < 4; i++)
+            {
+                if (left[i]-- > 0) continue;
+                int n; do { n = rnd.Next(0, Symbols); } while (Array.IndexOf(cur, n) >= 0);
+                cur[i] = n; left[i] = rnd.Next(3, 7) - 1;
+            }
             using (var bmp = bg.Clone(RunRect, PixelFormat.Format32bppArgb))
             {
                 using (var g = Graphics.FromImage(bmp)) for (int i = 0; i < 4; i++) g.DrawImage(sym[cur[i]], CellX[i] - Pad - RunRect.Left, CellY - Pad - RunRect.Top, sym[cur[i]].Width, sym[cur[i]].Height);
@@ -175,32 +170,21 @@ public static class PredatorRender
         }
     }
 
-    // ------------------------------------------------------------ thermal view (shown for a few seconds after a tap)
-    static Color Heat(float t)
+    // ------------------------------------------------------------ battery: an icon and ten leaning dashes, one per 10 %
+    public const int BatX = 127, BatY = 340, IconW = 44, TickPitch = 16, BatH = 32, TicksW = 10 * TickPitch + 8;
+    static List<Dash> BatteryIcon()
     {
-        t = Math.Max(0, Math.Min(1, t));
-        float[][] stops = { new float[]{0f, 2, 2, 20}, new float[]{0.22f, 14, 20, 120}, new float[]{0.42f, 110, 20, 150}, new float[]{0.60f, 215, 35, 60}, new float[]{0.76f, 250, 130, 15}, new float[]{0.90f, 255, 230, 60}, new float[]{1f, 255, 255, 245} };
-        for (int i = 1; i < stops.Length; i++) if (t <= stops[i][0])
-        {
-            float k = (t - stops[i - 1][0]) / (stops[i][0] - stops[i - 1][0]);
-            return Color.FromArgb(255, Clamp(stops[i - 1][1] + (stops[i][1] - stops[i - 1][1]) * k), Clamp(stops[i - 1][2] + (stops[i][2] - stops[i - 1][2]) * k), Clamp(stops[i - 1][3] + (stops[i][3] - stops[i - 1][3]) * k));
-        }
-        return Color.White;
+        // the outline of a cell drawn the same way as everything else: dashes that stop short of the corners, and a terminal nub
+        return new List<Dash> { new Dash(8, 8, 30, 8), new Dash(8, 24, 30, 24), new Dash(4, 11, 4, 21), new Dash(34, 11, 34, 21), new Dash(39, 13, 39, 19) };
     }
-    public static Bitmap Thermal()
+    static List<Dash> BatteryTicks()
     {
-        var bmp = new Bitmap(S, S, PixelFormat.Format32bppArgb);
-        Pixels(bmp, (x, y, c) =>
-        {
-            float dx = x - 233, dy = y - 233; if (dx * dx + dy * dy > 233 * 233) return Color.Black;
-            float body = Fbm(x * 0.011f + 3, y * 0.011f + 7);                                   // warmth of the arm underneath, in slow blobs
-            float wrist = (float)Math.Exp(-(dx * dx / 34000f + (y - 250) * (y - 250) / 11000f));
-            float band = (float)Math.Exp(-(dy * dy) / 9000f);                                    // the display itself reads cold
-            float pulse = (float)Math.Exp(-((x - 333) * (x - 333) + (y - 358) * (y - 358)) / 1500f);
-            float t = 0.14f + 0.30f * body + 0.26f * wrist - 0.20f * band + 0.52f * pulse + (Hash(x / 2, y / 2) - 0.5f) * 0.035f;
-            return Heat(t);
-        });
-        return bmp;
+        var l = new List<Dash>(); for (int i = 0; i < 10; i++) { float x = 6 + i * TickPitch; l.Add(new Dash(x + 4, 6, x, 26)); } return l;
+    }
+    static Bitmap Strip(List<Dash> ds, int w, float sw)
+    {
+        var wire = MaskOf(w, BatH, g => { using (var pen = StrokePen(Color.White, sw)) Draw(g, pen, 0, 0, ds); });
+        return Glow(w, BatH, wire, Red, 0);
     }
     static Bitmap Flat(int alpha) { var b = new Bitmap(8, 8, PixelFormat.Format32bppArgb); using (var g = Graphics.FromImage(b)) g.Clear(Color.FromArgb(alpha, 255, 255, 255)); return b; }
 
@@ -208,15 +192,11 @@ public static class PredatorRender
     {
         Func<string, string> P = n => System.IO.Path.Combine(outDir, n + ".png");
         var bg = Background(); bg.Save(P("pr_bg"), ImageFormat.Png);
-        for (int v = 0; v < 10; v++)
-        {
-            Lit(Digit(v), Red).Save(P("pr_g" + v), ImageFormat.Png);
-            Lit(Digit(v), Hot).Save(P("pr_t" + v), ImageFormat.Png);
-            Ambient(Digit(v)).Save(P("pr_a" + v), ImageFormat.Png);
-        }
+        for (int v = 0; v < 10; v++) { Lit(Digit(v), Red).Save(P("pr_g" + v), ImageFormat.Png); Ambient(Digit(v)).Save(P("pr_a" + v), ImageFormat.Png); }
         var sym = new Bitmap[Symbols]; for (int n = 0; n < Symbols; n++) sym[n] = Lit(Symbol(n), Red);
         SaveRun(bg, sym, P);
-        Thermal().Save(P("pr_thermal"), ImageFormat.Png);
-        Flat(255).Save(P("pr_on"), ImageFormat.Png); Flat(0).Save(P("pr_off"), ImageFormat.Png);
+        Strip(BatteryIcon(), IconW, 3.6f).Save(P("pr_bat"), ImageFormat.Png);
+        Strip(BatteryTicks(), TicksW, 5f).Save(P("pr_ticks"), ImageFormat.Png);
+        Flat(0).Save(P("pr_off"), ImageFormat.Png);
     }
 }

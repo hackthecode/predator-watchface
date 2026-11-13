@@ -1,5 +1,5 @@
 # Composites a local test frame from the rendered layers (no watch needed). -Run N shows frame N of the running display, -Thermal the tap view.
-param([string]$Digits = "1842", [int]$Run = -1, [switch]$Thermal, [string]$Out)
+param([string]$Digits = "1842", [int]$Run = -1, [switch]$Thermal, [string]$Out)   # -Thermal is obsolete since v2.1
 Add-Type -AssemblyName System.Drawing
 $d = (Resolve-Path (Join-Path $PSScriptRoot "..\res\drawable")).Path
 $c = New-Object System.Drawing.Bitmap 466, 466; $g = [System.Drawing.Graphics]::FromImage($c); $g.SmoothingMode = 'AntiAlias'; $g.TextRenderingHint = 'AntiAliasGridFit'

@@ -55,11 +55,19 @@
       <PartImage x="335" y="144" width="108" height="178" alpha="0"><Transform target="alpha" value="(([MINUTE] % 10) == 9) ? 255 : 0"/><Image resource="pr_g9"/></PartImage>
     </Group>
 
-    <!-- the running display: covers the cells for 5 s out of every 7, restarting with the time each time the face wakes -->
+    <!-- the running display: covers the cells after 1 s of time, restarting with the time each time the face wakes -->
     <PartAnimatedImage name="run" x="23" y="144" width="420" height="178">
       <Variant mode="AMBIENT" target="alpha" value="0"/>
       <AnimationController play="ON_VISIBLE" repeat="TRUE" beforePlaying="FIRST_FRAME" afterPlaying="FIRST_FRAME"/>
-      <SequenceImages loopCount="1" frameRate="2" thumbnail="pr_off">
+      <SequenceImages loopCount="1" frameRate="12" thumbnail="pr_off">
+        <Image resource="pr_off"/>
+        <Image resource="pr_off"/>
+        <Image resource="pr_off"/>
+        <Image resource="pr_off"/>
+        <Image resource="pr_off"/>
+        <Image resource="pr_off"/>
+        <Image resource="pr_off"/>
+        <Image resource="pr_off"/>
         <Image resource="pr_off"/>
         <Image resource="pr_off"/>
         <Image resource="pr_off"/>
@@ -74,115 +82,74 @@
         <Image resource="pr_r07"/>
         <Image resource="pr_r08"/>
         <Image resource="pr_r09"/>
+        <Image resource="pr_r10"/>
+        <Image resource="pr_r11"/>
+        <Image resource="pr_r12"/>
+        <Image resource="pr_r13"/>
+        <Image resource="pr_r14"/>
+        <Image resource="pr_r15"/>
+        <Image resource="pr_r16"/>
+        <Image resource="pr_r17"/>
+        <Image resource="pr_r18"/>
+        <Image resource="pr_r19"/>
+        <Image resource="pr_r20"/>
+        <Image resource="pr_r21"/>
+        <Image resource="pr_r22"/>
+        <Image resource="pr_r23"/>
+        <Image resource="pr_r24"/>
+        <Image resource="pr_r25"/>
+        <Image resource="pr_r26"/>
+        <Image resource="pr_r27"/>
+        <Image resource="pr_r28"/>
+        <Image resource="pr_r29"/>
+        <Image resource="pr_r30"/>
+        <Image resource="pr_r31"/>
+        <Image resource="pr_r32"/>
+        <Image resource="pr_r33"/>
+        <Image resource="pr_r34"/>
+        <Image resource="pr_r35"/>
+        <Image resource="pr_r36"/>
+        <Image resource="pr_r37"/>
+        <Image resource="pr_r38"/>
+        <Image resource="pr_r39"/>
+        <Image resource="pr_r40"/>
+        <Image resource="pr_r41"/>
+        <Image resource="pr_r42"/>
+        <Image resource="pr_r43"/>
+        <Image resource="pr_r44"/>
+        <Image resource="pr_r45"/>
+        <Image resource="pr_r46"/>
+        <Image resource="pr_r47"/>
+        <Image resource="pr_r48"/>
+        <Image resource="pr_r49"/>
+        <Image resource="pr_r50"/>
+        <Image resource="pr_r51"/>
+        <Image resource="pr_r52"/>
+        <Image resource="pr_r53"/>
+        <Image resource="pr_r54"/>
+        <Image resource="pr_r55"/>
+        <Image resource="pr_r56"/>
+        <Image resource="pr_r57"/>
+        <Image resource="pr_r58"/>
+        <Image resource="pr_r59"/>
       </SequenceImages>
     </PartAnimatedImage>
 
-    <Group name="readouts" x="0" y="0" width="466" height="466" alpha="255">
+    <Group name="date" x="0" y="0" width="466" height="466" alpha="255">
       <Variant mode="AMBIENT" target="alpha" value="0"/>
       <PartText x="133" y="96" width="200" height="24"><Text align="CENTER"><Font family="mono_bold" size="18" color="#ffc81e1e"><Upper><Template>%s %s %s<Parameter expression="[DAY_OF_WEEK_S]"/><Parameter expression="[DAY]"/><Parameter expression="[MONTH_S]"/></Template></Upper></Font></Text></PartText>
-      <PartText x="88" y="346" width="90" height="24"><Text align="CENTER"><Font family="mono_bold" size="18" color="#ffc81e1e"><Template>%s%%<Parameter expression="[BATTERY_PERCENT]"/></Template></Font></Text></PartText>
-      <PartText x="183" y="346" width="100" height="24"><Text align="CENTER"><Font family="mono_bold" size="18" color="#ffc81e1e"><Template>%s<Parameter expression="[STEP_COUNT]"/></Template></Font></Text></PartText>
-      <PartText x="288" y="346" width="90" height="24" alpha="0"><Transform target="alpha" value="(round([HEART_RATE]) &gt; 0) ? 255 : 0"/><Text align="CENTER"><Font family="mono_bold" size="18" color="#ffc81e1e"><Template>%s<Parameter expression="round([HEART_RATE])"/></Template></Font></Text></PartText>
-      <PartText x="288" y="346" width="90" height="24" alpha="255"><Transform target="alpha" value="(round([HEART_RATE]) &gt; 0) ? 0 : 255"/><Text align="CENTER"><Font family="mono_bold" size="18" color="#ffc81e1e">--</Font></Text></PartText>
     </Group>
 
-    <!-- thermal view: a tap switches the whole face to heat vision for four seconds -->
-    <Group name="thermal" x="0" y="0" width="466" height="466" alpha="255">
+    <!-- battery: an icon, then ten dashes worth 10 % each. All ten sit there faintly; a mask reveals the lit ones from the left -->
+    <Group name="battery" x="127" y="340" width="212" height="32" alpha="255">
       <Variant mode="AMBIENT" target="alpha" value="0"/>
-      <PartAnimatedImage x="0" y="0" width="466" height="466" renderMode="MASK">
-        <AnimationController play="TAP" loopCount="1" beforePlaying="FIRST_FRAME" afterPlaying="FIRST_FRAME"/>
-        <SequenceImages loopCount="1" frameRate="10" thumbnail="pr_off">
-          <Image resource="pr_off"/>
-          <Image resource="pr_on"/>
-          <Image resource="pr_on"/>
-          <Image resource="pr_on"/>
-          <Image resource="pr_on"/>
-          <Image resource="pr_on"/>
-          <Image resource="pr_on"/>
-          <Image resource="pr_on"/>
-          <Image resource="pr_on"/>
-          <Image resource="pr_on"/>
-          <Image resource="pr_on"/>
-          <Image resource="pr_on"/>
-          <Image resource="pr_on"/>
-          <Image resource="pr_on"/>
-          <Image resource="pr_on"/>
-          <Image resource="pr_on"/>
-          <Image resource="pr_on"/>
-          <Image resource="pr_on"/>
-          <Image resource="pr_on"/>
-          <Image resource="pr_on"/>
-          <Image resource="pr_on"/>
-          <Image resource="pr_on"/>
-          <Image resource="pr_on"/>
-          <Image resource="pr_on"/>
-          <Image resource="pr_on"/>
-          <Image resource="pr_on"/>
-          <Image resource="pr_on"/>
-          <Image resource="pr_on"/>
-          <Image resource="pr_on"/>
-          <Image resource="pr_on"/>
-          <Image resource="pr_on"/>
-          <Image resource="pr_on"/>
-          <Image resource="pr_on"/>
-          <Image resource="pr_on"/>
-          <Image resource="pr_on"/>
-          <Image resource="pr_on"/>
-          <Image resource="pr_on"/>
-          <Image resource="pr_on"/>
-          <Image resource="pr_on"/>
-          <Image resource="pr_on"/>
-          <Image resource="pr_on"/>
-          <Image resource="pr_off"/>
-        </SequenceImages>
-      </PartAnimatedImage>
-      <Group x="0" y="0" width="466" height="466" renderMode="SOURCE">
-        <PartImage x="0" y="0" width="466" height="466"><Image resource="pr_thermal"/></PartImage>
-        <PartImage x="23" y="144" width="108" height="178" alpha="0"><Transform target="alpha" value="(floor(([IS_24_HOUR_MODE] ? [HOUR_0_23] : [HOUR_1_12]) / 10) == 0) ? 255 : 0"/><Image resource="pr_t0"/></PartImage>
-        <PartImage x="23" y="144" width="108" height="178" alpha="0"><Transform target="alpha" value="(floor(([IS_24_HOUR_MODE] ? [HOUR_0_23] : [HOUR_1_12]) / 10) == 1) ? 255 : 0"/><Image resource="pr_t1"/></PartImage>
-        <PartImage x="23" y="144" width="108" height="178" alpha="0"><Transform target="alpha" value="(floor(([IS_24_HOUR_MODE] ? [HOUR_0_23] : [HOUR_1_12]) / 10) == 2) ? 255 : 0"/><Image resource="pr_t2"/></PartImage>
-        <PartImage x="23" y="144" width="108" height="178" alpha="0"><Transform target="alpha" value="(floor(([IS_24_HOUR_MODE] ? [HOUR_0_23] : [HOUR_1_12]) / 10) == 3) ? 255 : 0"/><Image resource="pr_t3"/></PartImage>
-        <PartImage x="23" y="144" width="108" height="178" alpha="0"><Transform target="alpha" value="(floor(([IS_24_HOUR_MODE] ? [HOUR_0_23] : [HOUR_1_12]) / 10) == 4) ? 255 : 0"/><Image resource="pr_t4"/></PartImage>
-        <PartImage x="23" y="144" width="108" height="178" alpha="0"><Transform target="alpha" value="(floor(([IS_24_HOUR_MODE] ? [HOUR_0_23] : [HOUR_1_12]) / 10) == 5) ? 255 : 0"/><Image resource="pr_t5"/></PartImage>
-        <PartImage x="23" y="144" width="108" height="178" alpha="0"><Transform target="alpha" value="(floor(([IS_24_HOUR_MODE] ? [HOUR_0_23] : [HOUR_1_12]) / 10) == 6) ? 255 : 0"/><Image resource="pr_t6"/></PartImage>
-        <PartImage x="23" y="144" width="108" height="178" alpha="0"><Transform target="alpha" value="(floor(([IS_24_HOUR_MODE] ? [HOUR_0_23] : [HOUR_1_12]) / 10) == 7) ? 255 : 0"/><Image resource="pr_t7"/></PartImage>
-        <PartImage x="23" y="144" width="108" height="178" alpha="0"><Transform target="alpha" value="(floor(([IS_24_HOUR_MODE] ? [HOUR_0_23] : [HOUR_1_12]) / 10) == 8) ? 255 : 0"/><Image resource="pr_t8"/></PartImage>
-        <PartImage x="23" y="144" width="108" height="178" alpha="0"><Transform target="alpha" value="(floor(([IS_24_HOUR_MODE] ? [HOUR_0_23] : [HOUR_1_12]) / 10) == 9) ? 255 : 0"/><Image resource="pr_t9"/></PartImage>
-        <PartImage x="113" y="144" width="108" height="178" alpha="0"><Transform target="alpha" value="((([IS_24_HOUR_MODE] ? [HOUR_0_23] : [HOUR_1_12]) % 10) == 0) ? 255 : 0"/><Image resource="pr_t0"/></PartImage>
-        <PartImage x="113" y="144" width="108" height="178" alpha="0"><Transform target="alpha" value="((([IS_24_HOUR_MODE] ? [HOUR_0_23] : [HOUR_1_12]) % 10) == 1) ? 255 : 0"/><Image resource="pr_t1"/></PartImage>
-        <PartImage x="113" y="144" width="108" height="178" alpha="0"><Transform target="alpha" value="((([IS_24_HOUR_MODE] ? [HOUR_0_23] : [HOUR_1_12]) % 10) == 2) ? 255 : 0"/><Image resource="pr_t2"/></PartImage>
-        <PartImage x="113" y="144" width="108" height="178" alpha="0"><Transform target="alpha" value="((([IS_24_HOUR_MODE] ? [HOUR_0_23] : [HOUR_1_12]) % 10) == 3) ? 255 : 0"/><Image resource="pr_t3"/></PartImage>
-        <PartImage x="113" y="144" width="108" height="178" alpha="0"><Transform target="alpha" value="((([IS_24_HOUR_MODE] ? [HOUR_0_23] : [HOUR_1_12]) % 10) == 4) ? 255 : 0"/><Image resource="pr_t4"/></PartImage>
-        <PartImage x="113" y="144" width="108" height="178" alpha="0"><Transform target="alpha" value="((([IS_24_HOUR_MODE] ? [HOUR_0_23] : [HOUR_1_12]) % 10) == 5) ? 255 : 0"/><Image resource="pr_t5"/></PartImage>
-        <PartImage x="113" y="144" width="108" height="178" alpha="0"><Transform target="alpha" value="((([IS_24_HOUR_MODE] ? [HOUR_0_23] : [HOUR_1_12]) % 10) == 6) ? 255 : 0"/><Image resource="pr_t6"/></PartImage>
-        <PartImage x="113" y="144" width="108" height="178" alpha="0"><Transform target="alpha" value="((([IS_24_HOUR_MODE] ? [HOUR_0_23] : [HOUR_1_12]) % 10) == 7) ? 255 : 0"/><Image resource="pr_t7"/></PartImage>
-        <PartImage x="113" y="144" width="108" height="178" alpha="0"><Transform target="alpha" value="((([IS_24_HOUR_MODE] ? [HOUR_0_23] : [HOUR_1_12]) % 10) == 8) ? 255 : 0"/><Image resource="pr_t8"/></PartImage>
-        <PartImage x="113" y="144" width="108" height="178" alpha="0"><Transform target="alpha" value="((([IS_24_HOUR_MODE] ? [HOUR_0_23] : [HOUR_1_12]) % 10) == 9) ? 255 : 0"/><Image resource="pr_t9"/></PartImage>
-        <PartImage x="245" y="144" width="108" height="178" alpha="0"><Transform target="alpha" value="(floor([MINUTE] / 10) == 0) ? 255 : 0"/><Image resource="pr_t0"/></PartImage>
-        <PartImage x="245" y="144" width="108" height="178" alpha="0"><Transform target="alpha" value="(floor([MINUTE] / 10) == 1) ? 255 : 0"/><Image resource="pr_t1"/></PartImage>
-        <PartImage x="245" y="144" width="108" height="178" alpha="0"><Transform target="alpha" value="(floor([MINUTE] / 10) == 2) ? 255 : 0"/><Image resource="pr_t2"/></PartImage>
-        <PartImage x="245" y="144" width="108" height="178" alpha="0"><Transform target="alpha" value="(floor([MINUTE] / 10) == 3) ? 255 : 0"/><Image resource="pr_t3"/></PartImage>
-        <PartImage x="245" y="144" width="108" height="178" alpha="0"><Transform target="alpha" value="(floor([MINUTE] / 10) == 4) ? 255 : 0"/><Image resource="pr_t4"/></PartImage>
-        <PartImage x="245" y="144" width="108" height="178" alpha="0"><Transform target="alpha" value="(floor([MINUTE] / 10) == 5) ? 255 : 0"/><Image resource="pr_t5"/></PartImage>
-        <PartImage x="245" y="144" width="108" height="178" alpha="0"><Transform target="alpha" value="(floor([MINUTE] / 10) == 6) ? 255 : 0"/><Image resource="pr_t6"/></PartImage>
-        <PartImage x="245" y="144" width="108" height="178" alpha="0"><Transform target="alpha" value="(floor([MINUTE] / 10) == 7) ? 255 : 0"/><Image resource="pr_t7"/></PartImage>
-        <PartImage x="245" y="144" width="108" height="178" alpha="0"><Transform target="alpha" value="(floor([MINUTE] / 10) == 8) ? 255 : 0"/><Image resource="pr_t8"/></PartImage>
-        <PartImage x="245" y="144" width="108" height="178" alpha="0"><Transform target="alpha" value="(floor([MINUTE] / 10) == 9) ? 255 : 0"/><Image resource="pr_t9"/></PartImage>
-        <PartImage x="335" y="144" width="108" height="178" alpha="0"><Transform target="alpha" value="(([MINUTE] % 10) == 0) ? 255 : 0"/><Image resource="pr_t0"/></PartImage>
-        <PartImage x="335" y="144" width="108" height="178" alpha="0"><Transform target="alpha" value="(([MINUTE] % 10) == 1) ? 255 : 0"/><Image resource="pr_t1"/></PartImage>
-        <PartImage x="335" y="144" width="108" height="178" alpha="0"><Transform target="alpha" value="(([MINUTE] % 10) == 2) ? 255 : 0"/><Image resource="pr_t2"/></PartImage>
-        <PartImage x="335" y="144" width="108" height="178" alpha="0"><Transform target="alpha" value="(([MINUTE] % 10) == 3) ? 255 : 0"/><Image resource="pr_t3"/></PartImage>
-        <PartImage x="335" y="144" width="108" height="178" alpha="0"><Transform target="alpha" value="(([MINUTE] % 10) == 4) ? 255 : 0"/><Image resource="pr_t4"/></PartImage>
-        <PartImage x="335" y="144" width="108" height="178" alpha="0"><Transform target="alpha" value="(([MINUTE] % 10) == 5) ? 255 : 0"/><Image resource="pr_t5"/></PartImage>
-        <PartImage x="335" y="144" width="108" height="178" alpha="0"><Transform target="alpha" value="(([MINUTE] % 10) == 6) ? 255 : 0"/><Image resource="pr_t6"/></PartImage>
-        <PartImage x="335" y="144" width="108" height="178" alpha="0"><Transform target="alpha" value="(([MINUTE] % 10) == 7) ? 255 : 0"/><Image resource="pr_t7"/></PartImage>
-        <PartImage x="335" y="144" width="108" height="178" alpha="0"><Transform target="alpha" value="(([MINUTE] % 10) == 8) ? 255 : 0"/><Image resource="pr_t8"/></PartImage>
-        <PartImage x="335" y="144" width="108" height="178" alpha="0"><Transform target="alpha" value="(([MINUTE] % 10) == 9) ? 255 : 0"/><Image resource="pr_t9"/></PartImage>
-        <PartText x="133" y="96" width="200" height="24"><Text align="CENTER"><Font family="mono_bold" size="18" color="#ffffffff"><Upper><Template>%s %s %s<Parameter expression="[DAY_OF_WEEK_S]"/><Parameter expression="[DAY]"/><Parameter expression="[MONTH_S]"/></Template></Upper></Font></Text></PartText>
-        <PartText x="88" y="346" width="90" height="24"><Text align="CENTER"><Font family="mono_bold" size="18" color="#ffffffff"><Template>%s%%<Parameter expression="[BATTERY_PERCENT]"/></Template></Font></Text></PartText>
-        <PartText x="183" y="346" width="100" height="24"><Text align="CENTER"><Font family="mono_bold" size="18" color="#ffffffff"><Template>%s<Parameter expression="[STEP_COUNT]"/></Template></Font></Text></PartText>
-        <PartText x="288" y="346" width="90" height="24" alpha="0"><Transform target="alpha" value="(round([HEART_RATE]) &gt; 0) ? 255 : 0"/><Text align="CENTER"><Font family="mono_bold" size="18" color="#ffffffff"><Template>%s<Parameter expression="round([HEART_RATE])"/></Template></Font></Text></PartText>
-        <PartText x="288" y="346" width="90" height="24" alpha="255"><Transform target="alpha" value="(round([HEART_RATE]) &gt; 0) ? 0 : 255"/><Text align="CENTER"><Font family="mono_bold" size="18" color="#ffffffff">--</Font></Text></PartText>
+      <PartImage x="0" y="0" width="44" height="32"><Image resource="pr_bat"/></PartImage>
+      <PartImage x="44" y="0" width="168" height="32" alpha="38"><Image resource="pr_ticks"/></PartImage>
+      <Group name="lit" x="44" y="0" width="168" height="32">
+        <PartDraw x="0" y="0" width="168" height="32" renderMode="MASK">
+          <Rectangle x="0" y="0" width="168" height="32"><Transform target="width" value="16 * floor((clamp([BATTERY_PERCENT], 0, 100) + 9) / 10)"/><Fill color="#ffffffff"/></Rectangle>
+        </PartDraw>
+        <PartImage x="0" y="0" width="168" height="32" renderMode="SOURCE"><Image resource="pr_ticks"/></PartImage>
       </Group>
     </Group>
 

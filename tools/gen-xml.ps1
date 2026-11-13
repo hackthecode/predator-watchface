@@ -1,6 +1,6 @@
 # Generates res/raw/watchface.xml for the Predator face.
 # Layers, back to front: black background with the display's red back-light / time digits / running display /
-# small readouts / thermal view (revealed for 4 s by a tap) / always-on.
+# date / battery (icon + ten dashes) / always-on.
 $root = Split-Path $PSScriptRoot -Parent
 function Esc($s) { [System.Security.SecurityElement]::Escape($s) }
 
@@ -12,8 +12,9 @@ $cells = @(
   @{ x = 349; expr = "([MINUTE] % 10)" }
 )
 $CY = 158; $CW = 80; $CH = 150; $PAD = 14        # keep in sync with PredatorRender
-$HR = 'round([HEART_RATE])'
-$DIM = "#ffc81e1e"; $WHITE = "#ffffffff"
+$DIM = "#ffc81e1e"
+# battery row, keep in sync with PredatorRender.Bat*
+$BX = 127; $BY = 340; $ICONW = 44; $PITCH = 16; $BH = 32; $TICKSW = 168
 
 function Glyphs($pre, $pad, $ind) {
   $sb = ""
@@ -21,28 +22,16 @@ function Glyphs($pre, $pad, $ind) {
     $sb += "$ind<PartImage x=`"$($c.x - $pad)`" y=`"$($CY - $pad)`" width=`"$($CW + 2 * $pad)`" height=`"$($CH + 2 * $pad)`" alpha=`"0`"><Transform target=`"alpha`" value=`"$(Esc "($($c.expr) == $k) ? 255 : 0")`"/><Image resource=`"$pre$k`"/></PartImage>`n" } }
   $sb
 }
-function Txt($x, $y, $w, $h, $size, $color, $body, $alphaExpr = $null, $alpha0 = 255) {
-  $a = if ($alphaExpr) { " alpha=`"$alpha0`"" } else { "" }
-  $t = if ($alphaExpr) { "<Transform target=`"alpha`" value=`"$(Esc $alphaExpr)`"/>" } else { "" }
-  "<PartText x=`"$x`" y=`"$y`" width=`"$w`" height=`"$h`"$a>$t<Text align=`"CENTER`"><Font family=`"mono_bold`" size=`"$size`" color=`"$color`">$body</Font></Text></PartText>`n"
-}
 function Tpl($tpl, [string[]]$exprs) { "<Template>$(Esc $tpl)" + (($exprs | ForEach-Object { "<Parameter expression=`"$(Esc $_)`"/>" }) -join "") + "</Template>" }
-# date above the display; battery, steps and pulse in one row below it. $c = text colour
-function Readouts($c, $ind) {
-  $s  = $ind + (Txt 133 96 200 24 18 $c ("<Upper>" + (Tpl "%s %s %s" @("[DAY_OF_WEEK_S]", "[DAY]", "[MONTH_S]")) + "</Upper>"))
-  $s += $ind + (Txt 88 346 90 24 18 $c (Tpl "%s%%" @("[BATTERY_PERCENT]")))
-  $s += $ind + (Txt 183 346 100 24 18 $c (Tpl "%s" @("[STEP_COUNT]")))
-  $s += $ind + (Txt 288 346 90 24 18 $c (Tpl "%s" @($HR)) "($HR > 0) ? 255 : 0" 0)
-  $s += $ind + (Txt 288 346 90 24 18 $c "--" "($HR > 0) ? 0 : 255" 255)
-  $s
-}
 function Frames($list, $ind) { ($list | ForEach-Object { "$ind<Image resource=`"$_`"/>`n" }) -join "" }
 
-# The display alternates for as long as the screen is on: HOLD seconds showing the time, RUN seconds of symbols changing
-# FPS times a second. One animation does it all (separate animations drift out of step on the watch): transparent frames
-# while the time shows, then opaque frames of the four cells with symbols lit, baked by PredatorRender.SaveRun.
-$FPS = 2; $HOLD = 2; $RUN = 5
-$runFrames = (1..($FPS * $HOLD) | ForEach-Object { "pr_off" }) + (0..($FPS * $RUN - 1) | ForEach-Object { "pr_r{0:00}" -f $_ })
+# The display alternates for as long as the screen is on: HOLD seconds showing the time, then the running frames
+# (PredatorRender.SaveRun: one per tick, each cell changing 2 to 4 times a second on its own). One animation does it all,
+# because separate animations drift out of step on the watch: transparent frames while the time shows, opaque ones after.
+$FPS = 12; $HOLD = 1; $RUNFRAMES = 60
+$runFrames = (1..($FPS * $HOLD) | ForEach-Object { "pr_off" }) + (0..($RUNFRAMES - 1) | ForEach-Object { "pr_r{0:00}" -f $_ })
+# one dash per started 10 %: 1-10 % lights one, 91-100 % lights all ten
+$LIT = 'floor((clamp([BATTERY_PERCENT], 0, 100) + 9) / 10)'
 
 $xml = @"
 <?xml version="1.0" encoding="utf-8"?>
@@ -62,7 +51,7 @@ $xml = @"
       <Variant mode="AMBIENT" target="alpha" value="0"/>
 $(Glyphs "pr_g" $PAD "      ")    </Group>
 
-    <!-- the running display: covers the cells for $RUN s out of every $($HOLD + $RUN), restarting with the time each time the face wakes -->
+    <!-- the running display: covers the cells after $HOLD s of time, restarting with the time each time the face wakes -->
     <PartAnimatedImage name="run" x="$(37 - $PAD)" y="$($CY - $PAD)" width="$(349 + $CW + $PAD - (37 - $PAD))" height="$($CH + 2 * $PAD)">
       <Variant mode="AMBIENT" target="alpha" value="0"/>
       <AnimationController play="ON_VISIBLE" repeat="TRUE" beforePlaying="FIRST_FRAME" afterPlaying="FIRST_FRAME"/>
@@ -70,21 +59,22 @@ $(Glyphs "pr_g" $PAD "      ")    </Group>
 $(Frames $runFrames "        ")      </SequenceImages>
     </PartAnimatedImage>
 
-    <Group name="readouts" x="0" y="0" width="466" height="466" alpha="255">
+    <Group name="date" x="0" y="0" width="466" height="466" alpha="255">
       <Variant mode="AMBIENT" target="alpha" value="0"/>
-$(Readouts $DIM "      ")    </Group>
+      <PartText x="133" y="96" width="200" height="24"><Text align="CENTER"><Font family="mono_bold" size="18" color="$DIM"><Upper>$(Tpl "%s %s %s" @("[DAY_OF_WEEK_S]", "[DAY]", "[MONTH_S]"))</Upper></Font></Text></PartText>
+    </Group>
 
-    <!-- thermal view: a tap switches the whole face to heat vision for four seconds -->
-    <Group name="thermal" x="0" y="0" width="466" height="466" alpha="255">
+    <!-- battery: an icon, then ten dashes worth 10 % each. All ten sit there faintly; a mask reveals the lit ones from the left -->
+    <Group name="battery" x="$BX" y="$BY" width="$($ICONW + $TICKSW)" height="$BH" alpha="255">
       <Variant mode="AMBIENT" target="alpha" value="0"/>
-      <PartAnimatedImage x="0" y="0" width="466" height="466" renderMode="MASK">
-        <AnimationController play="TAP" loopCount="1" beforePlaying="FIRST_FRAME" afterPlaying="FIRST_FRAME"/>
-        <SequenceImages loopCount="1" frameRate="10" thumbnail="pr_off">
-$(Frames (@("pr_off") + (1..40 | ForEach-Object { "pr_on" }) + @("pr_off")) "          ")        </SequenceImages>
-      </PartAnimatedImage>
-      <Group x="0" y="0" width="466" height="466" renderMode="SOURCE">
-        <PartImage x="0" y="0" width="466" height="466"><Image resource="pr_thermal"/></PartImage>
-$(Glyphs "pr_t" $PAD "        ")$(Readouts $WHITE "        ")      </Group>
+      <PartImage x="0" y="0" width="$ICONW" height="$BH"><Image resource="pr_bat"/></PartImage>
+      <PartImage x="$ICONW" y="0" width="$TICKSW" height="$BH" alpha="38"><Image resource="pr_ticks"/></PartImage>
+      <Group name="lit" x="$ICONW" y="0" width="$TICKSW" height="$BH">
+        <PartDraw x="0" y="0" width="$TICKSW" height="$BH" renderMode="MASK">
+          <Rectangle x="0" y="0" width="$TICKSW" height="$BH"><Transform target="width" value="$(Esc "$PITCH * $LIT")"/><Fill color="#ffffffff"/></Rectangle>
+        </PartDraw>
+        <PartImage x="0" y="0" width="$TICKSW" height="$BH" renderMode="SOURCE"><Image resource="pr_ticks"/></PartImage>
+      </Group>
     </Group>
 
     <!-- always-on: hairline digits only -->
