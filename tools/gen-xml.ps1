@@ -25,10 +25,10 @@ function Glyphs($pre, $pad, $ind) {
 function Tpl($tpl, [string[]]$exprs) { "<Template>$(Esc $tpl)" + (($exprs | ForEach-Object { "<Parameter expression=`"$(Esc $_)`"/>" }) -join "") + "</Template>" }
 function Frames($list, $ind) { ($list | ForEach-Object { "$ind<Image resource=`"$_`"/>`n" }) -join "" }
 
-# A 10 s loop for as long as the screen is on (PredatorRender.SaveRun): symbols assemble into the time over ASM ticks, the
+# A 5 s loop for as long as the screen is on (PredatorRender.SaveRun): symbols assemble into the time over ASM ticks, the
 # time stands alone for HOLD ticks (transparent frames), then it falls apart into symbols again. One animation does it all,
 # because separate animations drift out of step on the watch.
-$FPS = 12; $ASM = 24; $HOLD = 12; $RUNFRAMES = 120
+$FPS = 12; $ASM = 24; $HOLD = 18; $RUNFRAMES = 60
 $runFrames = 0..($RUNFRAMES - 1) | ForEach-Object { if ($_ -ge $ASM -and $_ -lt $ASM + $HOLD) { "pr_off" } else { "pr_r{0:000}" -f $_ } }
 # one dash per started 10 %: 1-10 % lights one, 91-100 % lights all ten
 $LIT = 'floor((clamp([BATTERY_PERCENT], 0, 100) + 9) / 10)'
