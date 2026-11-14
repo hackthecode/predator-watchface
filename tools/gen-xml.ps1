@@ -25,11 +25,11 @@ function Glyphs($pre, $pad, $ind) {
 function Tpl($tpl, [string[]]$exprs) { "<Template>$(Esc $tpl)" + (($exprs | ForEach-Object { "<Parameter expression=`"$(Esc $_)`"/>" }) -join "") + "</Template>" }
 function Frames($list, $ind) { ($list | ForEach-Object { "$ind<Image resource=`"$_`"/>`n" }) -join "" }
 
-# The display alternates for as long as the screen is on: HOLD seconds showing the time, then the running frames
-# (PredatorRender.SaveRun: one per tick, each cell changing 2 to 4 times a second on its own). One animation does it all,
-# because separate animations drift out of step on the watch: transparent frames while the time shows, opaque ones after.
-$FPS = 12; $HOLD = 1; $RUNFRAMES = 60
-$runFrames = (1..($FPS * $HOLD) | ForEach-Object { "pr_off" }) + (0..($RUNFRAMES - 1) | ForEach-Object { "pr_r{0:00}" -f $_ })
+# A 10 s loop for as long as the screen is on (PredatorRender.SaveRun): symbols assemble into the time over ASM ticks, the
+# time stands alone for HOLD ticks (transparent frames), then it falls apart into symbols again. One animation does it all,
+# because separate animations drift out of step on the watch.
+$FPS = 12; $ASM = 24; $HOLD = 12; $RUNFRAMES = 120
+$runFrames = 0..($RUNFRAMES - 1) | ForEach-Object { if ($_ -ge $ASM -and $_ -lt $ASM + $HOLD) { "pr_off" } else { "pr_r{0:000}" -f $_ } }
 # one dash per started 10 %: 1-10 % lights one, 91-100 % lights all ten
 $LIT = 'floor((clamp([BATTERY_PERCENT], 0, 100) + 9) / 10)'
 
@@ -51,7 +51,7 @@ $xml = @"
       <Variant mode="AMBIENT" target="alpha" value="0"/>
 $(Glyphs "pr_g" $PAD "      ")    </Group>
 
-    <!-- the running display: covers the cells after $HOLD s of time, restarting with the time each time the face wakes -->
+    <!-- the running display: symbols first, the time assembled by second 2, restarting each time the face wakes -->
     <PartAnimatedImage name="run" x="$(37 - $PAD)" y="$($CY - $PAD)" width="$(349 + $CW + $PAD - (37 - $PAD))" height="$($CH + 2 * $PAD)">
       <Variant mode="AMBIENT" target="alpha" value="0"/>
       <AnimationController play="ON_VISIBLE" repeat="TRUE" beforePlaying="FIRST_FRAME" afterPlaying="FIRST_FRAME"/>

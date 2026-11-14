@@ -146,14 +146,38 @@ public static class PredatorRender
     }
 
     // ------------------------------------------------------------ running display
-    // Opaque frames of the four cells (cut from the background, so they cover the time digits completely). There is one frame per
-    // tick of the animation clock (RunFps). Each cell keeps its symbol for a random 3 to 6 ticks, i.e. it changes 2 to 4 times a
-    // second, independently of the others.
+    // One frame per tick of the animation clock (RunFps) for a 10 s loop: symbols that assemble into the time over the first
+    // 2 s, the time alone for 1 s, then 7 s of the time falling apart into symbols again.
+    // A frame is the four cells cut from the background with symbols lit, so where it is opaque it covers the time digits
+    // underneath. The area is divided into 28 patches, one around each segment of each digit; a patch that is "open" is
+    // transparent, which lets that segment of the real time show and takes away the bits of symbol that were there.
+    // Each cell keeps its symbol for a random 3 to 6 ticks, i.e. it changes 2 to 4 times a second, independently of the others.
     public static readonly Rectangle RunRect = new Rectangle(CellX[0] - Pad, CellY - Pad, CellX[3] + CellW + Pad - (CellX[0] - Pad), CellH + 2 * Pad);
-    public const int RunFps = 12, RunFrames = 60;
+    public const int RunFps = 12, RunFrames = 120, AsmFrames = 24, HoldFrames = 12;
+    static float SegDist(Dash d, float px, float py)
+    {
+        float vx = d.x2 - d.x1, vy = d.y2 - d.y1, t = ((px - d.x1) * vx + (py - d.y1) * vy) / (vx * vx + vy * vy); t = Math.Max(0, Math.Min(1, t));
+        float qx = d.x1 + t * vx - px, qy = d.y1 + t * vy - py; return qx * qx + qy * qy;
+    }
+    static int[] Shuffled(Random rnd, int n) { var a = new int[n]; for (int i = 0; i < n; i++) a[i] = i; for (int i = n - 1; i > 0; i--) { int j = rnd.Next(i + 1), t = a[i]; a[i] = a[j]; a[j] = t; } return a; }
     static void SaveRun(Bitmap bg, Bitmap[] sym, Func<string, string> P)
     {
+        int w = RunRect.Width, h = RunRect.Height; const int N = 28;
+        var patch = new int[w * h];
+        for (int y = 0; y < h; y++) for (int x = 0; x < w; x++)
+        {
+            float best = float.MaxValue;
+            for (int c = 0; c < 4; c++) for (int s = 0; s < 7; s++)
+            {
+                float d = SegDist(Seven[s], x + RunRect.Left - CellX[c], y + RunRect.Top - CellY);
+                if (d < best) { best = d; patch[y * w + x] = c * 7 + s; }
+            }
+        }
         var rnd = new Random(23); var cur = new[] { -1, -1, -1, -1 }; var left = new int[4];
+        int[] a1 = Shuffled(rnd, N), a2 = Shuffled(rnd, N); var opens = new int[N]; var closes = new int[N];
+        int fall = AsmFrames + HoldFrames;
+        for (int j = 0; j < N; j++) { opens[a1[j]] = 2 + j * (AsmFrames - 4) / (N - 1); closes[a2[j]] = fall + j * (RunFrames - fall - 6) / (N - 1); }
+        var open = new float[N]; var alpha = new float[w * h];
         for (int f = 0; f < RunFrames; f++)
         {
             for (int i = 0; i < 4; i++)
@@ -162,10 +186,16 @@ public static class PredatorRender
                 int n; do { n = rnd.Next(0, Symbols); } while (Array.IndexOf(cur, n) >= 0);
                 cur[i] = n; left[i] = rnd.Next(3, 7) - 1;
             }
+            if (f >= AsmFrames && f < fall) continue;                       // the time alone: gen-xml puts a transparent frame here
+            for (int k = 0; k < N; k++)                                     // a patch takes two ticks to open or close
+                open[k] = f < AsmFrames ? Math.Max(0, Math.Min(1, (f - opens[k] + 1) / 2f)) : 1 - Math.Max(0, Math.Min(1, (f - closes[k] + 1) / 2f));
+            for (int i = 0; i < w * h; i++) alpha[i] = 1 - open[patch[i]];
+            var soft = Blur(alpha, w, h, 1);
             using (var bmp = bg.Clone(RunRect, PixelFormat.Format32bppArgb))
             {
                 using (var g = Graphics.FromImage(bmp)) for (int i = 0; i < 4; i++) g.DrawImage(sym[cur[i]], CellX[i] - Pad - RunRect.Left, CellY - Pad - RunRect.Top, sym[cur[i]].Width, sym[cur[i]].Height);
-                bmp.Save(P("pr_r" + f.ToString("00")), ImageFormat.Png);
+                Pixels(bmp, (x, y, c) => Color.FromArgb(Clamp(255 * soft[y * w + x]), c.R, c.G, c.B));
+                bmp.Save(P("pr_r" + f.ToString("000")), ImageFormat.Png);
             }
         }
     }

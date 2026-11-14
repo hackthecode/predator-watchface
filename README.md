@@ -1,6 +1,6 @@
 # Predator — watch face for Wear OS
 
-A hunter's wrist display for round Wear OS watches (built for the OnePlus Watch 3, 466×466): bright red dashes on pure black. The display shows the time for one second, then runs through alien symbols for five, and keeps alternating for as long as the screen is on.
+A hunter's wrist display for round Wear OS watches (built for the OnePlus Watch 3, 466×466): bright red dashes on pure black. The display wakes showing alien symbols, which assemble into the time piece by piece over two seconds, and then fall apart into symbols again: a ten-second loop for as long as the screen is on.
 
 <p align="center">
   <img src="res/drawable/preview.png" width="250" alt="Predator watch face showing the time">
@@ -18,7 +18,7 @@ Everything is drawn with one stroke: a short, thin, flat-ended dash, with more g
 
 ## Features
 
-- Alternates 1 s of time and 5 s of running symbols while the screen is on, starting with the time on every wake
+- A 10 s loop while the screen is on, restarting on every wake: symbols assemble into the time over 2 s (one digit segment at a time, in random order), the time stands alone for 1 s, then it falls apart into symbols over 7 s
 - Black background for OLED: the only lit pixels are the dashes, the date and a faint red back-light behind the display
 - Battery as an icon and ten leaning dashes, one per started 10 %, drawn in the same stroke
 - Always-on mode: hairline digits only
