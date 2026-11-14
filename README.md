@@ -7,6 +7,10 @@ A hunter's wrist display for round Wear OS watches (built for the OnePlus Watch 
   <img src="docs/running.png" width="250" alt="Predator watch face running symbols">
 </p>
 
+<p align="center"><img src="docs/animation.png" width="560" alt="Predator watch face, animated"></p>
+
+The animation is rendered from the face's own layers.
+
 The pictures are screenshots from the watch.
 
 ## The display
